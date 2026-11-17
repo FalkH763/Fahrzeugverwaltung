@@ -47,6 +47,18 @@ const [dl] = await Promise.all([page.waitForEvent('download'), page.locator('but
 const job = JSON.parse(readFileSync(await dl.path(), 'utf8'));
 ok('Blender-Stoffauftrag exportiert', job.format === 'atelier-cloth-job' && job.fabric.preset === 'satin' && job.preview?.mesh?.areaM2 > 0, dl.suggestedFilename());
 
+// Posen, Gesten, Tänze für alle Figuren
+await page.locator('.tabs button', { hasText: 'Bewegung' }).click();
+await page.locator('.chip', { hasText: 'Salsa-Grundschritt' }).click();
+await page.locator('button', { hasText: 'Für alle Figuren übernehmen' }).click();
+await page.waitForTimeout(1200);
+const mv = await page.evaluate(() => window.__atelier.profiles.filter((p) => !p.customFigure).map((p) => p.motion.id));
+ok('Tanz auf alle Figuren übertragen', mv.every((x) => x === 'salsa'), mv.join(','));
+await page.evaluate(() => { const s = window.__atelier; s.profiles.find((q) => q.id === s.activeId).motion.id = 'thumbsUp'; });
+const fingerBent = await page.waitForFunction(() => Math.abs(window.__atelier.figure.bones.fR0a.rotation.z) > 0.5, null, { timeout: 30000 }).then(() => true, () => false);
+ok('Geste beugt Fingergelenke', fingerBent);
+await page.screenshot({ path: `${OUT}/04_geste.png` });
+
 // GLB aus der Basisfigur erzeugen (GLTFExporter) und als eigene Figur importieren
 const glbBytes = await page.evaluate(async () => {
   const { GLTFExporter } = await import('/node_modules/three/examples/jsm/exporters/GLTFExporter.js');

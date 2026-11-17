@@ -200,21 +200,39 @@ export class Figure {
     const palm = new THREE.SphereGeometry(1, 24, 16);
     palm.scale(0.016 * s, 0.05 * s, 0.041 * s);
     palm.translate(P.x - sx * 0.002, P.y - 0.045 * s, P.z + 0.002);
-    group.push(palm);
+    for (const g of group) this.attach(`wrist${side}`, g, M, `Hand_${side}`);
+    // Finger mit je zwei Gliedern (Grund- und Endglied) als eigene Gelenke → Gesten
     const fingerL = [0.074, 0.083, 0.078, 0.062];
     for (let i = 0; i < 4; i++) {
-      const len = fingerL[i] * s * (A.handLen / (0.105 * A.H) || 1);
-      const f = new THREE.CapsuleGeometry(0.0082 * s * (i === 3 ? 0.85 : 1), len, 4, 10);
-      f.rotateX(0.08 * (i - 1.5));
-      f.rotateZ(sx * 0.06);
-      f.translate(P.x - sx * 0.004, P.y - 0.09 * s - len / 2, P.z + (0.026 - i * 0.0175) * s);
-      group.push(f);
+      const len = fingerL[i] * s;
+      const r = 0.0082 * s * (i === 3 ? 0.85 : 1);
+      const kx = P.x - sx * 0.004, ky = P.y - 0.088 * s, kz = P.z + (0.026 - i * 0.0175) * s;
+      const prox = this.addBone(`f${side}${i}a`, `wrist${side}`, [kx, ky, kz]);
+      const l1 = len * 0.55, l2 = len * 0.45;
+      const g1 = new THREE.CapsuleGeometry(r, l1 - r, 4, 10); g1.translate(kx, ky - l1 / 2, kz);
+      this.attach(prox, g1, M, `Finger_${side}${i}`);
+      const dist = this.addBone(`f${side}${i}b`, prox, [kx, ky - l1, kz]);
+      const g2 = new THREE.CapsuleGeometry(r * 0.92, l2 - r, 4, 10); g2.translate(kx, ky - l1 - l2 / 2, kz);
+      this.attach(dist, g2, M, `Finger_${side}${i}`);
     }
-    const th = new THREE.CapsuleGeometry(0.0095 * s, 0.05 * s, 4, 10);
-    th.rotateX(-0.6); th.rotateZ(-sx * 0.35);
-    th.translate(P.x - sx * 0.008, P.y - 0.055 * s, P.z + 0.04 * s);
-    group.push(th);
-    for (const g of group) this.attach(`wrist${side}`, g, M, `Hand_${side}`);
+    const tx = P.x - sx * 0.006, ty = P.y - 0.03 * s, tz = P.z + 0.032 * s;
+    const thumb = this.addBone(`t${side}`, `wrist${side}`, [tx, ty, tz]);
+    const th = new THREE.CapsuleGeometry(0.0095 * s, 0.045 * s, 4, 10);
+    th.translate(tx, ty - 0.03 * s, tz);
+    this.attach(thumb, th, M, `Daumen_${side}`);
+    this.bones[thumb].rotation.set(-0.6, 0, -sx * 0.35);
+    this.bones[thumb].userData.rest = this.bones[thumb].rotation.clone();
+  }
+
+  /** Zusätzliches Gelenk unter einem bestehenden (Ruhepose-Weltkoordinaten). */
+  addBone(name, parent, p) {
+    const g = new THREE.Group(); g.name = name;
+    const pp = this.pivotWorld[parent];
+    g.position.set(p[0] - pp.x, p[1] - pp.y, p[2] - pp.z);
+    this.bones[parent].add(g);
+    this.bones[name] = g;
+    this.pivotWorld[name] = new V3(...p);
+    return name;
   }
 
   // Kopf: deformierte UV-Kugel; Gesichtsregler formen Nase, Lippen, Kiefer, Wangen, Brauen

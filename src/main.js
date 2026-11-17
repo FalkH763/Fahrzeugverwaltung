@@ -533,11 +533,28 @@ function tabBewegung(p) {
       clips.length ? null : el('p', { class: 'note' }, 'Die Datei enthält keine Animationsclips.'),
     ];
   }
-  const { MOVES } = state.R || { MOVES: [] };
+  const { MOVES = [], MOVE_GROUPS = [] } = state.R || {};
   const man = (m.manual ||= {});
+  const sel = el('select', { 'aria-label': 'Bewegung' }, MOVE_GROUPS.map((g) => el('optgroup', { label: g.label },
+    MOVES.filter((x) => x.group === g.id).map((x) => el('option', { value: x.id, selected: x.id === m.id }, x.label)))));
+  sel.addEventListener('change', () => { m.id = sel.value; persist(); });
+  const chips = (group) => el('div', { class: 'chips' }, MOVES.filter((x) => x.group === group).map((x) => el('button', {
+    class: `chip ${x.id === m.id ? 'on' : ''}`, onclick: () => { m.id = x.id; persist(); renderTab(); },
+  }, x.label)));
   return [
-    el('h3', {}, 'Studio-Moves'),
-    selectRow('Bewegung', m.id, (MOVES.length ? MOVES : [{ id: 'idle', label: 'Stehen' }]).map((x) => [x.id, x.label]), (v) => { m.id = v; persist(); }),
+    el('h3', {}, 'Bewegung'),
+    el('div', { class: 'row two' }, el('label', {}, 'Auswahl'), sel),
+    el('h3', {}, 'Posen'), chips('pose'),
+    el('h3', {}, 'Gesten'), chips('geste'),
+    el('h3', {}, 'Tänze'), chips('tanz'),
+    m.id === 'sequence' ? el('p', { class: 'note' }, `Tanzfolge: ${(m.sequence || []).map((q) => `${MOVES.find((x) => x.id === q.id)?.label || q.id} (${q.beats} Schläge)`).join(' → ') || 'keine im Projekt – Groove als Ersatz'}`) : null,
+    el('div', { class: 'btns' }, el('button', {
+      class: 'btn', onclick: () => {
+        let n = 0;
+        for (const q of state.profiles) if (q !== p && !q.customFigure) { q.motion = { ...q.motion, id: m.id, intensity: m.intensity, bpm: m.bpm, sequence: JSON.parse(JSON.stringify(m.sequence || [])) }; n++; }
+        persist(); toast(`Bewegung „${MOVES.find((x) => x.id === m.id)?.label}“ auf ${n} weitere Figur(en) übertragen.`);
+      },
+    }, 'Für alle Figuren übernehmen')),
     slider('Intensität', m.intensity ?? 1, [0, 1.5, 0.05], (v) => { m.intensity = v; persist(); }),
     slider('Tempo BPM', m.bpm ?? 104, [60, 160, 1], (v) => { m.bpm = v; persist(); }),
     el('h3', {}, 'Grundhaltung'),
@@ -606,7 +623,7 @@ async function boot() {
       import('./render/stage.js'), import('./render/figure.js'), import('./render/motion.js'), import('./render/importer.js'),
     ]);
     const realism = await import('./render/realism.js');
-    state.R = { Stage, Figure, applyPose: motion.applyPose, MOVES: motion.MOVES, loadGlb: importer.loadGlb, prepareRealistic: realism.prepareRealistic, applyAppearance: realism.applyAppearance };
+    state.R = { Stage, Figure, applyPose: motion.applyPose, MOVES: motion.MOVES, MOVE_GROUPS: motion.MOVE_GROUPS, loadGlb: importer.loadGlb, prepareRealistic: realism.prepareRealistic, applyAppearance: realism.applyAppearance };
     state.stage = new Stage($('#viewport'));
     state.stage.onFrame = (t, dt) => {
       const p = active();
