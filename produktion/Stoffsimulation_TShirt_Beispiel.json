@@ -1,0 +1,62 @@
+{
+  "format": "atelier-cloth-job",
+  "version": 1,
+  "createdAt": "2026-11-17T12:00:00.000Z",
+  "character": {
+    "id": "atelier-clara",
+    "name": "Clara",
+    "master": "masters/clara/clara_master.blend"
+  },
+  "garment": {
+    "id": "tshirt",
+    "label": "T-Shirt",
+    "slot": "top",
+    "object": "Garment_TShirt",
+    "pin": "neck_shoulder",
+    "note": "Oberen Rand fixieren; ausreichend Körperabstand und Armlochfreiheit"
+  },
+  "fabric": {
+    "preset": "jersey",
+    "gsm": 190,
+    "thicknessMm": 0.7,
+    "stretchPct": 35,
+    "bending": 18,
+    "damping": 20,
+    "friction": 0.4,
+    "roughness": 0.82
+  },
+  "simulation": {
+    "pose": "stand",
+    "initialOffsetM": 0.003,
+    "frames": 15,
+    "massFromRealMeshArea": true
+  },
+  "preview": {
+    "mesh": {
+      "areaM2": 1.0832,
+      "vertexCount": 12963
+    },
+    "blender": {
+      "totalMassKg": 0.205808,
+      "mass": 0.00001588,
+      "tension_stiffness": 10.811,
+      "compression_stiffness": 10.811,
+      "shear_stiffness": 5.406,
+      "bending_stiffness": 0.2624,
+      "tension_damping": 10,
+      "compression_damping": 10,
+      "shear_damping": 10,
+      "bending_damping": 1,
+      "air_damping": 1,
+      "quality": 8,
+      "collision": {
+        "distance_min": 0.003,
+        "self_distance_min": 0.0015,
+        "use_self_collision": true,
+        "friction": 8
+      },
+      "solidify_thickness": 0.0007
+    }
+  },
+  "disclaimer": "Entwurfsparameter, keine gemessenen Textildaten. Statischer Drapierungs-/Kollisionstest, keine Passformfreigabe."
+}

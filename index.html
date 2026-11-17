@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Charakteratelier V5</title>
+  <link rel="stylesheet" href="/src/ui/style.css" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">Charakteratelier <span>V5</span></div>
+    <div class="figure-name" id="figureName">–</div>
+    <div class="modes" role="tablist" aria-label="Modus">
+      <button id="modeView" role="tab">Ansicht</button>
+      <button id="modeEdit" role="tab" class="on">Editor</button>
+    </div>
+  </header>
+  <main class="layout">
+    <section class="viewport" id="viewport" aria-label="3D-Ansicht">
+      <div class="badge" id="badge">ID: –</div>
+      <div class="viewbar">
+        <button data-view="full">Ganz</button>
+        <button data-view="face">Gesicht</button>
+        <button data-view="torso">Oberkörper</button>
+        <button data-view="legs">Beine</button>
+        <button data-view="side">Seite</button>
+        <button data-view="back">Rücken</button>
+        <button id="spin" aria-pressed="false">Drehteller</button>
+        <button id="shot">Foto</button>
+      </div>
+      <div class="nogl" id="nogl" hidden>
+        <strong>WebGL ist nicht verfügbar.</strong>
+        <p>Import, Prüfbericht, Stoffwerte und Projektdaten funktionieren weiter. Eine fremde Figur wird nicht durch ein Bild der Basisfigur ersetzt.</p>
+      </div>
+      <div class="toast" id="toast" role="status" aria-live="polite"></div>
+    </section>
+    <aside class="panel" id="panel">
+      <nav class="tabs" id="tabs"></nav>
+      <div class="tabbody" id="tabbody"></div>
+    </aside>
+  </main>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
