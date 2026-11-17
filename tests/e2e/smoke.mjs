@@ -58,6 +58,12 @@ await page.evaluate(() => { const s = window.__atelier; s.profiles.find((q) => q
 const fingerBent = await page.waitForFunction(() => Math.abs(window.__atelier.figure.bones.fR0a.rotation.z) > 0.5, null, { timeout: 30000 }).then(() => true, () => false);
 ok('Geste beugt Fingergelenke', fingerBent);
 await page.screenshot({ path: `${OUT}/04_geste.png` });
+await page.locator('.tabs button', { hasText: 'Bewegung' }).click();
+await page.locator('.chip', { hasText: 'Knie-Bounce' }).click();
+const kitOk = await page.waitForFunction(() => { const s = window.__atelier; return s.kitPlayer && s.figure.bones.kneeL.rotation.x > 0.2; }, null, { timeout: 30000 }).then(() => true, () => false);
+const kitCount = await page.evaluate(() => window.__atelier.kitPack.poses.length + window.__atelier.kitPack.animations.length);
+ok('FALK MotionKit geladen und Knie-Bounce läuft', kitOk && kitCount === 38, `${kitCount} Einträge`);
+await page.screenshot({ path: `${OUT}/05_motionkit.png` });
 
 // GLB aus der Basisfigur erzeugen (GLTFExporter) und als eigene Figur importieren
 const glbBytes = await page.evaluate(async () => {

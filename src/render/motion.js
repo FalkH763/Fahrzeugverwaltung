@@ -80,11 +80,7 @@ function set(fig, spec) {
 /** Setzt die Pose. t in Sekunden. */
 export function applyPose(fig, motion, t) {
   const b = fig.bones;
-  for (const [name, bone] of Object.entries(b)) {
-    bone.rotation.set(0, 0, 0);
-    // Ellbogen/Schultern: erst beugen, dann einschwenken
-    if (/^(elbow|shoulder)/.test(name)) bone.rotation.order = 'YXZ';
-  }
+  for (const bone of Object.values(b)) bone.rotation.set(0, 0, 0);
   b.hips.position.set(0, fig.pivotWorld.hips.y, 0);
   const m = motion.manual || {};
   const k = motion.intensity ?? 1;

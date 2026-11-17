@@ -10,7 +10,7 @@ fort und ergänzt es um einen verlustfreien `atelierV5`-Abschnitt.
 ```bash
 npm install
 npm run dev          # http://127.0.0.1:5173
-npm test             # 17 Unit-/Paritätstests (Node, ohne Browser)
+npm test             # 20 Unit-/Paritätstests (Node, ohne Browser)
 npm run test:e2e     # Browser-Ende-zu-Ende (benötigt laufenden dev-Server + Playwright)
 npm run build        # statisches Paket in dist/
 ```
@@ -27,6 +27,7 @@ npm run build        # statisches Paket in dist/
 | **Eigene Figur (GLB)** | Vorprüfung (Container, Version, eingebettete Daten, keine Draco/Meshopt/KTX2, ≤150 MiB), Laden mit GLTFLoader ohne externe Nachladeversuche, Bericht (Meshes, Gelenke, Bilder inkl. Auflösung, Clips, Dreiecke, Budgets), SHA-256 + IndexedDB, Wiederherstellung nach Neuladen, „Basisfigur wählen“. |
 | **Realistische Figur bearbeiten** | Materialien der Import-GLB werden klassifiziert (Haut, Haare, Augen, Zähne). Hautton und Haarfarbe werden **detailerhaltend** im Shader umgerechnet: Poren, Sommersprossen und Strähnen der Originaltextur bleiben erhalten. So lassen sich aus einem realistischen Master weitere Varianten ableiten. |
 | **Posen, Gesten, Tänze** | Für jede Basisfigur: 7 Posen (u. a. Kontrapost, Hände in die Hüften, Arme verschränkt, Sitzen), 7 Gesten mit beweglichen Fingergelenken (Winken, Daumen hoch, Zeigen, Peace, Schulterzucken, Klatschen, Nicken), 7 Tänze im einstellbaren Tempo (Hip-Hop-Groove, Salsa, Disco, Schritt, Drehen, Wippen, Tanzfolge aus dem Projekt-JSON) und Passformtests. „Für alle Figuren übernehmen“ überträgt eine Bewegung auf alle Profile. Importfiguren nutzen ihre eingebetteten Clips; kein ungeprüftes Retargeting. |
+| **FALK MotionKit** | Aus `FALK_Studio_MotionKit_01.zip` übernommen: `StudioPosePlayer` (unverändert, `src/render/studio_pose_player.js`) und eine Auswahl des Bewegungspakets (`public/motions/falk_motion_pack.json`): 30 Posen (Fashion/Editorial, Gesten, Körpersprache, Boden/Requisiten) und 8 Animationen (u. a. Hüftschwung, Schultern kreisen, Catwalk-Gewichtswechsel, Knie-Bounce), spiegelbar, mit Geschwindigkeit. Boudoir-Posen und sexualisierte Tanzbewegungen sind nicht übernommen. Vorlagen für Rig-Zuordnung und Charakter-Manifest liegen in `docs/motionkit/`. |
 | **Blender** | `produktion/configure_cloth.py` richtet aus dem exportierten Auftrag einen statischen Drapierungs-/Kollisionstest ein (massenerhaltend, Pin-Gruppe, Kollision, Selbstkollision, Solidify). |
 
 ## Fotorealismus: ehrliche Einordnung

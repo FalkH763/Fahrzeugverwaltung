@@ -106,6 +106,8 @@ export class Figure {
     this.pivotWorld = {};
     for (const [name, [parent, p]] of Object.entries(tree)) {
       const g = new THREE.Group(); g.name = name;
+      // Schulter/Ellbogen: erst Abspreizen (Z), dann Beugen (X), dann Einschwenken (Y)
+      if (/^(elbow|shoulder)/.test(name)) g.rotation.order = 'YXZ';
       const pp = parent ? tree[parent][1] : [0, 0, 0];
       g.position.set(p[0] - pp[0], p[1] - pp[1], p[2] - pp[2]);
       (parent ? this.bones[parent] : this.root).add(g);

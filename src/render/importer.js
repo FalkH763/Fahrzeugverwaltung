@@ -20,7 +20,10 @@ export async function loadGlb(buffer, targetHeightM) {
   const scene = gltf.scene;
   const materials = new Map();
   let meshes = 0, joints = new Set();
+  const boneNames = new Set(), morphNames = new Set();
   scene.traverse((o) => {
+    if (o.isBone) boneNames.add(o.name);
+    if (o.isMesh) for (const k of Object.keys(o.morphTargetDictionary || {})) morphNames.add(k);
     if (o.isMesh) {
       meshes++;
       o.castShadow = true; o.receiveShadow = true;
@@ -33,7 +36,7 @@ export async function loadGlb(buffer, targetHeightM) {
     scene,
     clips: gltf.animations || [],
     materials: [...materials.values()],
-    report: { ...report, loadedMeshes: meshes, loadedJoints: joints.size },
+    report: { ...report, loadedMeshes: meshes, loadedJoints: joints.size, boneNames: [...boneNames], morphNames: [...morphNames] },
   };
 }
 

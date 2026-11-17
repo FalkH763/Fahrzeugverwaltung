@@ -1,0 +1,30 @@
+{
+  "schemaId": "falk.studio.glb-rig-map.v1",
+  "note": "Nur Dokumentation für spätere echte Retargeting-Implementierung. Keine direkte Rotationskompatibilität garantiert.",
+  "sourceFile": "my_character.glb",
+  "orientationCalibrationRequired": true,
+  "bones": {
+    "hips": null,
+    "spine": null,
+    "chest": null,
+    "head": null,
+    "shoulderL": null,
+    "elbowL": null,
+    "wristL": null,
+    "shoulderR": null,
+    "elbowR": null,
+    "wristR": null,
+    "thighL": null,
+    "kneeL": null,
+    "ankleL": null,
+    "thighR": null,
+    "kneeR": null,
+    "ankleR": null,
+    "fL0a": null,
+    "fL0b": null,
+    "fR0a": null,
+    "fR0b": null,
+    "tL": null,
+    "tR": null
+  }
+}

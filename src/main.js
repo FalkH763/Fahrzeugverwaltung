@@ -106,8 +106,25 @@ async function showActive() {
   const t0 = performance.now();
   state.figure = new Figure(p);
   state.stage.setFigure(state.figure.root);
-  applyPose(state.figure, p.motion, 0);
+  state.kitPlayer = null;
+  if (state.kitPack) {
+    try { state.kitPlayer = new state.R.StudioPosePlayer(state.figure, state.kitPack, { positionScale: p.shape.heightCm / 170 }); }
+    catch (e) { console.warn(e); }
+  }
+  animateBase(p, 0);
   state.lastBuildMs = Math.round(performance.now() - t0);
+}
+
+/** Basisfigur bewegen: eigene Moves oder MotionKit-Einträge („kit:<id>“). */
+function animateBase(p, t) {
+  const m = p.motion;
+  if (m.id?.startsWith('kit:') && state.kitPlayer) {
+    try {
+      state.kitPlayer.apply(m.id.slice(4), t * (m.speed ?? 1), { strength: Math.min(1.5, m.intensity ?? 1), mirror: !!m.mirror });
+      return;
+    } catch (e) { console.warn(e); }
+  }
+  state.R.applyPose(state.figure, m.id?.startsWith('kit:') ? { ...m, id: 'idle' } : m, t);
 }
 
 function disposeFigure() {
@@ -477,8 +494,9 @@ async function importGlb(p, f) {
     state.lastReport = { error: e instanceof GlbError ? e.message : `Prüfung fehlgeschlagen: ${e.message}`, name: f.name };
     renderTab(); toast(state.lastReport.error, true); return;
   }
+  let loadedInfo = {};
   if (state.gl) {
-    try { await state.R.loadGlb(buf.slice(0), 1.7); }
+    try { loadedInfo = (await state.R.loadGlb(buf.slice(0), 1.7)).report; }
     catch (e) { state.lastReport = { error: `GLTFLoader konnte die Datei nicht laden: ${e.message}`, name: f.name }; renderTab(); toast(state.lastReport.error, true); return; }
   }
   const sha256 = await sha256Hex(buf);
@@ -486,7 +504,7 @@ async function importGlb(p, f) {
   catch (e) { toast(`Lokales Speichern fehlgeschlagen: ${e.message}`, true); return; }
   p.customFigure = { sha256, name: f.name, sizeBytes: f.size, report: summarize(report), materialOverrides: {} };
   if (report.clips.length) p.motion.id = `import:${report.clips[0]}`;
-  state.lastReport = { ...report, name: f.name, sha256 };
+  state.lastReport = { ...report, boneNames: loadedInfo.boneNames, morphNames: loadedInfo.morphNames, name: f.name, sha256 };
   state.custom = null;
   changed({ tabs: true });
   toast(`${f.name} importiert: ${report.meshes} Meshes, ${report.joints} Gelenke, ${report.clips.length} Clips.`);
@@ -501,6 +519,8 @@ function renderReport(r) {
     ['Meshes', r.meshes], ['Gelenke', r.joints], ['Skins', r.skins], ['Dreiecke', r.triangles.toLocaleString('de-DE')],
     ['Bilder', r.images.map((i) => (i.width ? `${i.width}×${i.height}` : i.mimeType || '?')).join(', ') || '–'],
     ['Materialien', r.materials.length], ['Animationsclips', r.clips.join(', ') || '–'], ['Morph Targets', r.morphTargets],
+    ...(r.boneNames?.length ? [['Knochen (Auszug)', `${r.boneNames.slice(0, 12).join(', ')}${r.boneNames.length > 12 ? ' …' : ''}`]] : []),
+    ...(r.morphNames?.length ? [['Morph-Namen (Auszug)', r.morphNames.slice(0, 12).join(', ')]] : []),
   ];
   return el('div', {}, el('h3', {}, 'Importbericht'),
     el('table', { class: 'rep' }, rows.map(([k, v]) => el('tr', {}, el('td', {}, k), el('td', {}, String(v))))),
@@ -548,11 +568,12 @@ function tabBewegung(p) {
     el('h3', {}, 'Gesten'), chips('geste'),
     el('h3', {}, 'Tänze'), chips('tanz'),
     m.id === 'sequence' ? el('p', { class: 'note' }, `Tanzfolge: ${(m.sequence || []).map((q) => `${MOVES.find((x) => x.id === q.id)?.label || q.id} (${q.beats} Schläge)`).join(' → ') || 'keine im Projekt – Groove als Ersatz'}`) : null,
+    ...kitSection(p),
     el('div', { class: 'btns' }, el('button', {
       class: 'btn', onclick: () => {
         let n = 0;
-        for (const q of state.profiles) if (q !== p && !q.customFigure) { q.motion = { ...q.motion, id: m.id, intensity: m.intensity, bpm: m.bpm, sequence: JSON.parse(JSON.stringify(m.sequence || [])) }; n++; }
-        persist(); toast(`Bewegung „${MOVES.find((x) => x.id === m.id)?.label}“ auf ${n} weitere Figur(en) übertragen.`);
+        for (const q of state.profiles) if (q !== p && !q.customFigure) { q.motion = { ...q.motion, id: m.id, intensity: m.intensity, bpm: m.bpm, mirror: m.mirror, speed: m.speed, sequence: JSON.parse(JSON.stringify(m.sequence || [])) }; n++; }
+        persist(); toast(`Bewegung „${moveLabel(m.id)}“ auf ${n} weitere Figur(en) übertragen.`);
       },
     }, 'Für alle Figuren übernehmen')),
     slider('Intensität', m.intensity ?? 1, [0, 1.5, 0.05], (v) => { m.intensity = v; persist(); }),
@@ -567,6 +588,41 @@ function tabBewegung(p) {
     slider('Oberkörper neigen', man.lean ?? 0, [-20, 30, 1], (v) => { man.lean = v; persist(); }, (v) => `${v}°`),
     el('p', { class: 'note' }, 'Für die Passformprüfung: „Arme heben“, „Knie beugen“ und „Sitzen“ zeigen Achsel, Knie und Bund unter Bewegung.'),
   ];
+}
+
+function moveLabel(id) {
+  if (id?.startsWith('kit:')) {
+    const k = id.slice(4);
+    return [...(state.kitPack?.poses || []), ...(state.kitPack?.animations || [])].find((x) => x.id === k)?.label || k;
+  }
+  return (state.R?.MOVES || []).find((x) => x.id === id)?.label || id;
+}
+
+/** UI-Abschnitt für das FALK Studio MotionKit. */
+function kitSection(p) {
+  const m = p.motion;
+  const pack = state.kitPack;
+  if (!pack) return [el('h3', {}, 'FALK MotionKit'), el('p', { class: 'note' }, 'MotionKit nicht geladen (public/motions/falk_motion_pack.json fehlt).')];
+  const items = [...pack.poses.map((x) => ({ ...x, type: 'Pose' })), ...pack.animations.map((x) => ({ ...x, type: 'Animation' }))];
+  const out = [el('h3', {}, `FALK MotionKit · ${items.length} Einträge`)];
+  for (const g of pack.groups) {
+    const list = items.filter((x) => x.group === g.id);
+    if (!list.length) continue;
+    out.push(el('p', { class: 'note' }, g.label));
+    out.push(el('div', { class: 'chips' }, list.map((x) => el('button', {
+      class: `chip ${m.id === `kit:${x.id}` ? 'on' : ''}`,
+      title: `${x.type}${x.requires?.length ? ` · benötigt: ${x.requires.join(', ')} (noch nicht enthalten)` : ''}`,
+      onclick: () => { m.id = `kit:${x.id}`; persist(); renderTab(); },
+    }, x.label, x.type === 'Animation' ? ' ▸' : '', x.requires?.length ? ' *' : ''))));
+  }
+  const mirror = el('input', { type: 'checkbox', checked: !!m.mirror });
+  mirror.addEventListener('change', () => { m.mirror = mirror.checked; persist(); });
+  out.push(
+    el('label', { class: 'row two' }, el('span', {}, 'Spiegeln (links ↔ rechts)'), mirror),
+    slider('Abspielgeschwindigkeit', m.speed ?? 1, [0.25, 2, 0.05], (v) => { m.speed = v; persist(); }, (v) => `${v}×`),
+    el('p', { class: 'note' }, '▸ = Animation · * = benötigt Requisite/IK/Bodenkontakt, die noch nicht eingebaut sind. Statische Posen wechseln ohne Überblendung.'),
+  );
+  return out;
 }
 
 // --- Projekt ---
@@ -623,11 +679,16 @@ async function boot() {
       import('./render/stage.js'), import('./render/figure.js'), import('./render/motion.js'), import('./render/importer.js'),
     ]);
     const realism = await import('./render/realism.js');
-    state.R = { Stage, Figure, applyPose: motion.applyPose, MOVES: motion.MOVES, MOVE_GROUPS: motion.MOVE_GROUPS, loadGlb: importer.loadGlb, prepareRealistic: realism.prepareRealistic, applyAppearance: realism.applyAppearance };
+    const { StudioPosePlayer } = await import('./render/studio_pose_player.js');
+    try {
+      const r = await fetch(`${import.meta.env.BASE_URL}motions/falk_motion_pack.json`);
+      if (r.ok) state.kitPack = await r.json();
+    } catch { /* MotionKit optional */ }
+    state.R = { Stage, Figure, applyPose: motion.applyPose, MOVES: motion.MOVES, MOVE_GROUPS: motion.MOVE_GROUPS, loadGlb: importer.loadGlb, prepareRealistic: realism.prepareRealistic, StudioPosePlayer, applyAppearance: realism.applyAppearance };
     state.stage = new Stage($('#viewport'));
     state.stage.onFrame = (t, dt) => {
       const p = active();
-      if (state.figure && p && !p.customFigure) state.R.applyPose(state.figure, p.motion, t);
+      if (state.figure && p && !p.customFigure) animateBase(p, t);
       state.custom?.mixer?.update(dt);
     };
   } else {

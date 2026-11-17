@@ -1,0 +1,53 @@
+{
+  "schemaId": "falk.studio.character-manifest.v1",
+  "character": {
+    "id": "char_001",
+    "displayName": "Neuer Charakter",
+    "adultOnly": true,
+    "referenceUsagePermissionConfirmed": false,
+    "referencePhotos": {
+      "faceFront": "references/face_front.jpg",
+      "faceProfileLeft": "references/face_profile_left.jpg",
+      "bodyFront": "references/body_front.jpg",
+      "bodySide": "references/body_side.jpg",
+      "bodyBack": "references/body_back.jpg"
+    },
+    "body": {
+      "heightMeters": null,
+      "proportionCalibration": "reference_required",
+      "restPose": "A-pose",
+      "unitScale": "meters"
+    },
+    "mesh": {
+      "modelPath": "characters/char_001.glb",
+      "authoringMaster": "characters/char_001.blend",
+      "meshStatus": "not_created",
+      "expectedSkinnedMesh": true,
+      "hairSeparate": true,
+      "eyesSeparate": true,
+      "clothingSeparate": true
+    },
+    "materials": {
+      "workflow": "PBR_metallic_roughness",
+      "targetTextureResolution": 4096,
+      "colorManagement": "calibrate_in_renderer",
+      "skinSubsurfaceScattering": "engine_specific"
+    },
+    "animation": {
+      "rigType": "humanoid",
+      "fingerBonesRequired": true,
+      "faceExpressions": true,
+      "visemesForLipSync": true,
+      "rigMapPath": "rig_map_template.json",
+      "motionPackPath": "falk_motion_pack.json",
+      "retargetingCalibrated": false
+    },
+    "export": {
+      "runtimeFormat": "glb",
+      "glTFVersion": "2.0",
+      "includeSkinning": true,
+      "includeMorphTargets": true,
+      "embedTextures": true
+    }
+  }
+}
